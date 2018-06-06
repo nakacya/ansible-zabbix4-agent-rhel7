@@ -1,0 +1,54 @@
+---
+
+# Download and install ZABBIX for Centos/RHEL version 7
+- name: Download ZABBIX Repo - Centos/RHEL 7
+  get_url: url={{ zabbixRepository }} dest=/tmp/zabbix.rpm
+  when: "ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'"
+
+- name: Install ZABBIX Repo - Centos/RHEL 7
+  yum:
+    name: /tmp/zabbix.rpm
+    state: present
+  when: "ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'"
+
+- name: get {{ zabbixRpmGpgKey }}
+  get_url: url={{ zabbixRpmGpgKey }} dest=/tmp/RPM-GPG-KEY-ZABBIX
+  when: "ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'"
+
+- name: Import a key from a file
+  rpm_key: state=present key=/tmp/RPM-GPG-KEY-ZABBIX
+
+- name: Install zabbix-agent
+  yum: name={{ item }} enablerepo=zabbix state=latest disable_gpg_check=no
+  with_items:
+    - zabbix-agent
+
+- name: disabled zabbix repository
+  lineinfile: dest=/etc/yum.repos.d/zabbix.repo regexp='^enabled' line="enabled=0"
+- name: disabled SELINUX
+  lineinfile: dest=/etc/selinu/config regexp='SELINUX=enforcing' line="SELINUX=disabled"
+- selinux:
+    state: disabled
+
+# Setting zabbix_agentd.conf
+- name: Setting zabbix_agentd.conf
+  lineinfile: >-
+    dest='/etc/zabbix/zabbix_agentd.conf'
+    regexp='{{ item.regexp }}'
+    insertafter='{{ item.insertafter }}'
+    line='{{ item.line }}'
+  with_items:
+    - regexp: '^Server=127.0.0.1'
+      insertafter: "^# Server=127.0.0.1"
+      line: 'Server={{ zabbix_server }}'
+    - regexp: '^ServerActive=127.0.0.1'
+      insertafter: "^# ServerActive=127.0.0.1"
+      line: 'ServerActive={{ zabbix_server_active }}'
+    - regexp: '^Hostname=Zabbix server'
+      insertafter: "^# Hostname=Zabbix server"
+      line: 'Hostname={{ zabbix_hostname }}'
+
+- name: start zabbix-agent server 
+  service: name=zabbix-agent state=started enabled=yes
+
+- include: update_firewalld.yml
