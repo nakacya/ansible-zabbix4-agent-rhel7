@@ -15,4 +15,4 @@ zabbixRpmGpgKey: http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
 #
 zabbix_server: 172.28.128.0/24
 zabbix_server_active: 172.28.128.3:10051,172.28.128.4:10051
-zabbix_hostname: test-client02
+zabbix_hostname: "{{ inventory_hostname }}"

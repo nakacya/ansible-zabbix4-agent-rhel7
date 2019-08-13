@@ -51,4 +51,3 @@
 - name: start zabbix-agent server 
   service: name=zabbix-agent state=started enabled=yes
 
-- include: update_firewalld.yml

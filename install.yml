@@ -1,0 +1,9 @@
+---
+# This playbook deploys the ZABBIX server. 
+- hosts: "{{ HOSTS }}"
+  become: yes
+  gather_facts:true
+  #remote_user: root
+
+  roles:
+    - zabbix4-agent
